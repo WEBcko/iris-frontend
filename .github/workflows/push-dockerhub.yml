@@ -82,4 +82,3 @@ jobs:
             sudo docker rm front || true
             sudo docker run -d --name front -p 3000:3000 "${{ secrets.DOCKERHUB_USERNAME }}"/front:latest
           EOF
-
