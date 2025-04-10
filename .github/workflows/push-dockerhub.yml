@@ -64,17 +64,12 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.GCLOUD_SSH_KEY }}" > ~/.ssh/gcloud_key
           chmod 600 ~/.ssh/gcloud_key
-
-      - name: Debug host reachability
+          
+      - name: SSH into VM and deploy container (via user/pass)
         run: |
-          echo "User: ${{ secrets.GCLOUD_USER }}"
-          echo "Host: ${{ secrets.GCLOUD_HOST }}"
-          ping -c 3 ${{ secrets.GCLOUD_HOST }} || echo "Ping failed"
-          nc -vz ${{ secrets.GCLOUD_HOST }} 22 || echo "Port 22 closed"
-  
-      - name: SSH into VM and deploy container
-        run: |
-          ssh -vvv -o StrictHostKeyChecking=no -i ~/.ssh/gcloud_key ${{ secrets.GCLOUD_USER }}@${{ secrets.GCLOUD_HOST }} << EOF
+          sudo apt-get update && sudo apt-get install -y sshpass
+      
+          sshpass -p "${{ secrets.GCLOUD_SSH_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.GCLOUD_USER }}@${{ secrets.GCLOUD_HOST }} << EOF
             echo "🔍 Logando no Docker..."
             echo "${{ secrets.DOCKERHUB_TOKEN }}" | sudo docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
           
