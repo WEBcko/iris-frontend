@@ -55,6 +55,7 @@ jobs:
             -t "${{ secrets.DOCKERHUB_USERNAME }}"/front:latest
 
   deploy:
+    needs: build  
     runs-on: ubuntu-latest
   
     steps:
