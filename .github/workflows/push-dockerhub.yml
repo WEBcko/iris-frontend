@@ -53,7 +53,6 @@ jobs:
       - name: Push Docker image 
         run: docker push "${{ secrets.DOCKERHUB_USERNAME }}/front:latest"
 
-
   deploy:
     needs: build  
     runs-on: ubuntu-latest
@@ -81,4 +80,4 @@ jobs:
             sudo docker stop front || true
             sudo docker rm front || true
             sudo docker run -d --name front -p 3000:3000 "${{ secrets.DOCKERHUB_USERNAME }}"/front:latest
-          EOF
+          EOF
