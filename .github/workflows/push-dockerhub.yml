@@ -58,19 +58,35 @@ jobs:
     runs-on: ubuntu-latest
   
     steps:
+    
       - name: Setup SSH key
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.GCLOUD_SSH_KEY }}" > ~/.ssh/gcloud_key
           chmod 600 ~/.ssh/gcloud_key
+
+      - name: Debug host reachability
+        run: |
+          echo "User: ${{ secrets.GCLOUD_USER }}"
+          echo "Host: ${{ secrets.GCLOUD_HOST }}"
+          ping -c 3 ${{ secrets.GCLOUD_HOST }} || echo "Ping failed"
+          nc -vz ${{ secrets.GCLOUD_HOST }} 22 || echo "Port 22 closed"
   
       - name: SSH into VM and deploy container
         run: |
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/gcloud_key ${{ secrets.GCLOUD_USER }}@${{ secrets.GCLOUD_HOST }} << EOF
+          ssh -vvv -o StrictHostKeyChecking=no -i ~/.ssh/gcloud_key ${{ secrets.GCLOUD_USER }}@${{ secrets.GCLOUD_HOST }} << EOF
+            echo "🔍 Logando no Docker..."
             echo "${{ secrets.DOCKERHUB_TOKEN }}" | sudo docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+          
+            echo "📦 Fazendo pull da imagem..."
             sudo docker pull "${{ secrets.DOCKERHUB_USERNAME }}"/front:latest
+          
+            echo "🛑 Parando container antigo..."
             sudo docker stop front || true
             sudo docker rm front || true
+          
+            echo "🚀 Rodando novo container..."
             sudo docker run -d --name front -p 3000:3000 "${{ secrets.DOCKERHUB_USERNAME }}"/front:latest
           EOF
+
 
