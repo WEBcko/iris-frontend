@@ -55,21 +55,22 @@ jobs:
             -t "${{ secrets.DOCKERHUB_USERNAME }}"/front:latest
 
   deploy:
-    needs: build  
     runs-on: ubuntu-latest
-
+  
     steps:
       - name: Setup SSH key
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.GCLOUD_SSH_KEY }}" > ~/.ssh/gcloud_key
           chmod 600 ~/.ssh/gcloud_key
-
+  
       - name: SSH into VM and deploy container
         run: |
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/gcloud_key ${{ secrets.GCLOUD_USER }}@${{ secrets.GCLOUD_HOST }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/gcloud_key ${{ secrets.GCLOUD_USER }}@${{ secrets.GCLOUD_HOST }} << EOF
+            echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
             docker pull "${{ secrets.DOCKERHUB_USERNAME }}"/front:latest
             docker stop front || true
             docker rm front || true
             docker run -d --name front -p 3000:3000 "${{ secrets.DOCKERHUB_USERNAME }}"/front:latest
           EOF
+
