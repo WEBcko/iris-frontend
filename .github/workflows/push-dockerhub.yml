@@ -45,7 +45,32 @@ jobs:
         run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
       - name: Build Docker image
-        run: docker build -t dogogh1/frontend-blogpost:latest .
+        run: docker build -t "${{ secrets.DOCKERHUB_USERNAME }}"/front:latest .
 
       - name: Push Docker image
-        run: docker push dogogh1/frontend-blogpost:latest
+        run: |
+          docker build . \
+            --build-arg VITE_API_URL=${{ secrets.API_URL }} \
+            --build-arg VITE_API_KEY=${{ secrets.API_KEY }} \
+            -t "${{ secrets.DOCKERHUB_USERNAME }}"/front:latest
+
+  deploy:
+    runs-on: ubuntu-latest
+  
+    steps:
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.GCLOUD_SSH_KEY }}" > ~/.ssh/gcloud_key
+          chmod 600 ~/.ssh/gcloud_key
+  
+      - name: SSH into VM and deploy container
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/gcloud_key ${{ secrets.GCLOUD_USER }}@${{ secrets.GCLOUD_HOST }} << EOF
+            echo "${{ secrets.DOCKERHUB_TOKEN }}" | sudo docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+            sudo docker pull "${{ secrets.DOCKERHUB_USERNAME }}"/front:latest
+            sudo docker stop front || true
+            sudo docker rm front || true
+            sudo docker run -d --name front -p 3000:3000 "${{ secrets.DOCKERHUB_USERNAME }}"/front:latest
+          EOF
+
