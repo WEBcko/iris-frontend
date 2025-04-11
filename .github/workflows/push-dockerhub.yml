@@ -64,13 +64,6 @@ jobs:
     runs-on: ubuntu-latest
   
     steps:
-
-      - name: Debug host reachability
-        run: |
-          echo "User: ${{ secrets.GCLOUD_USER }}"
-          echo "Host: ${{ secrets.GCLOUD_HOST }}"
-          ping -c 3 ${{ secrets.GCLOUD_HOST }} || echo "Ping failed"
-          nc -vz ${{ secrets.GCLOUD_HOST }} 22 || echo "Port 22 closed"
     
       - name: Setup SSH key
         run: |
