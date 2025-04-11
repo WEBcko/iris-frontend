@@ -36,20 +36,26 @@ jobs:
   build:
     needs: test  
     runs-on: ubuntu-latest
-
+  
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
+  
       - name: Log in to Docker Hub
         run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
-
+  
+      - name: Debug secrets (temporário)
+        run: |
+          echo "API_URL=${{ secrets.API_URL }}"
+          echo "API_KEY=${{ secrets.API_KEY }}"
+  
       - name: Build Docker image
         run: |
           docker build . \
             --build-arg VITE_API_URL=${{ secrets.API_URL }} \
             --build-arg VITE_API_KEY=${{ secrets.API_KEY }} \
-            -t "${{ secrets.DOCKERHUB_USERNAME }}"/front:latest
+            -t "${{ secrets.DOCKERHUB_USERNAME }}/front:latest"
+  
       - name: Push Docker image 
         run: docker push "${{ secrets.DOCKERHUB_USERNAME }}/front:latest"
 
@@ -58,6 +64,7 @@ jobs:
     runs-on: ubuntu-latest
   
     steps:
+    
       - name: Setup SSH key
         run: |
           mkdir -p ~/.ssh
@@ -73,4 +80,3 @@ jobs:
             sudo docker rm front || true
             sudo docker run -d --name front -p 3000:3000 "${{ secrets.DOCKERHUB_USERNAME }}"/front:latest
           EOF
-
