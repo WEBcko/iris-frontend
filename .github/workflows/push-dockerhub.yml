@@ -75,8 +75,10 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/gcloud_key ${{ secrets.GCLOUD_USER }}@${{ secrets.GCLOUD_HOST }} << EOF
             echo "${{ secrets.DOCKERHUB_TOKEN }}" | sudo docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
-            sudo docker pull "${{ secrets.DOCKERHUB_USERNAME }}"/front:latest
             sudo docker stop front || true
             sudo docker rm front || true
+            sudo docker image prune -f
+            sudo docker pull "${{ secrets.DOCKERHUB_USERNAME }}"/front:latest
             sudo docker run -d --name front -p 3000:3000 "${{ secrets.DOCKERHUB_USERNAME }}"/front:latest
           EOF
+          
