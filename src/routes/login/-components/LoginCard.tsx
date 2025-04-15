@@ -46,7 +46,6 @@ export default function LoginCard() {
   const auth = useAuth();
   const onSubmit: SubmitHandler<SignInInput> = async (data) => {
     await signInWithEmailAndPassword(firebaseAuth, data.email, data.password);
-    console.log(data)
     signIn(data, {
       onSuccess: (res) => {
         const encrypted = encryptToken(res.access_token);

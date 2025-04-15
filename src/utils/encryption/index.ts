@@ -14,6 +14,7 @@ export const decryptToken = (encryptedToken: string): string | null => {
 };
 
 export const encryptToken = (token: string): string => {
+  console.log(CryptoJS.AES.encrypt(token, encryptionKey).toString())
   return CryptoJS.AES.encrypt(token, encryptionKey).toString();
 };
 
