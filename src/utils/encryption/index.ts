@@ -1,6 +1,7 @@
 import CryptoJS from "crypto-js";
 
 const encryptionKey = import.meta.env.VITE_ENCRYPTION_KEY;
+console.log(encryptionKey)
 
 export const decryptToken = (encryptedToken: string): string | null => {
   try {
@@ -14,7 +15,7 @@ export const decryptToken = (encryptedToken: string): string | null => {
 };
 
 export const encryptToken = (token: string): string => {
-  console.log(CryptoJS.AES.encrypt(token, encryptionKey).toString())
+  console.log(encryptionKey)
   return CryptoJS.AES.encrypt(token, encryptionKey).toString();
 };
 
