@@ -10,6 +10,7 @@ export const useSignIn = () => {
     mutationFn: signIn,
     onError: (error: unknown) => {
       let errorMessage = "Erro ao fazer login";
+      console.error(error);
 
       if (axios.isAxiosError(error)) {
         errorMessage = error.response?.data?.error;
