@@ -61,7 +61,7 @@ jobs:
   
     steps:
     
-      - name: Setup SSH key
+      - name: Setup  SSH key
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.GCLOUD_SSH_KEY }}" > ~/.ssh/gcloud_key
