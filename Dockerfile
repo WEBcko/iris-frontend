@@ -3,11 +3,11 @@ FROM node:18-alpine
 
 # Argumentos para variáveis de ambiente do Vite
 ARG VITE_API_URL
-ARG VITE_API_KEY
+ARG VITE_ENCRYPTION_KEY
 
 # Exporta para o processo de build (npm run build vai enxergar isso)
 ENV VITE_API_URL=$VITE_API_URL
-ENV VITE_API_KEY=$VITE_API_KEY
+ENV VITE_ENCRYPTION_KEY=$VITE_ENCRYPTION_KEY
 
 # Defina o diretório de trabalho
 WORKDIR /app
