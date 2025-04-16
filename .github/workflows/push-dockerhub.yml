@@ -1,4 +1,4 @@
-name: Build and Push Docker image
+name: Test Build and Push Docker image
 
 on:
   workflow_dispatch:
@@ -49,7 +49,7 @@ jobs:
         run: |
           docker build . \
             --build-arg VITE_API_URL=${{ secrets.API_URL }} \
-            --build-arg VITE_API_KEY=${{ secrets.API_KEY }} \
+            --build-arg VITE_ENCRYPTION_KEY=${{ secrets.API_KEY }} \
             -t "${{ secrets.DOCKERHUB_USERNAME }}/front:latest"
   
       - name: Push Docker image 
@@ -61,7 +61,7 @@ jobs:
   
     steps:
     
-      - name: Setup SSH key
+      - name: Setup  SSH key
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.GCLOUD_SSH_KEY }}" > ~/.ssh/gcloud_key
