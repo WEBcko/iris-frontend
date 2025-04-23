@@ -1,0 +1,36 @@
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-store
+.package-lock.json.tmp
+
+dist
+build
+coverage
+storybook-static
+
+.vscode
+.idea
+*.swp
+*.swo
+*.log
+*.tsbuildinfo
+.eslintcache
+
+.git
+.gitignore
+.gitattributes
+
+Dockerfile*
+docker-compose*
+.dockerignore     # ← não precisa copiar ele mesmo
+.env*
+.env.*            # (.env.development, etc.)
+
+
+*.local
+*.cache
+*.tmp
+*.DS_Store
+Thumbs.db
