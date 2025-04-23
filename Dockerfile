@@ -4,7 +4,7 @@ WORKDIR /app
 
 # Copie apenas o necessário para instalar deps e aproveitar cache
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev          # dependências de produção apenas
+RUN npm ci          # dependências de produção apenas
 
 # Copie o resto do código e faça o build
 COPY . .
