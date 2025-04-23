@@ -1,34 +1,26 @@
-# Use uma imagem base do Node.js 18
-FROM node:18-alpine
+FROM node:18-alpine AS builder
 
-# Argumentos para variáveis de ambiente do Vite
-ARG VITE_API_URL
-ARG VITE_ENCRYPTION_KEY
-
-# Exporta para o processo de build (npm run build vai enxergar isso)
-ENV VITE_API_URL=$VITE_API_URL
-ENV VITE_ENCRYPTION_KEY=$VITE_ENCRYPTION_KEY
-
-# Defina o diretório de trabalho
 WORKDIR /app
 
-# Copie os arquivos de dependência
-COPY package*.json ./
+# Copie apenas o necessário para instalar deps e aproveitar cache
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev          # dependências de produção apenas
 
-# Instale as dependências
-RUN npm install
-
-# Copie o restante do código-fonte
+# Copie o resto do código e faça o build
 COPY . .
+ARG VITE_API_URL
+ARG VITE_ENCRYPTION_KEY
+ENV VITE_API_URL=$VITE_API_URL \
+    VITE_ENCRYPTION_KEY=$VITE_ENCRYPTION_KEY \
+    NODE_ENV=production
+RUN npm run build              # produz a pasta dist/
 
-# Construa o projeto
-RUN npm run build
 
-# Instale o serve globalmente
-RUN npm install -g serve
+FROM nginx:1.25-alpine AS runtime
 
-# Exponha a porta 3000
-EXPOSE 3000
+COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Comando para servir a pasta de build na porta 3000
-CMD ["serve", "-s", "dist", "-l", "3000"]
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
