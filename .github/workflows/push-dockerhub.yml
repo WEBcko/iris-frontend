@@ -74,5 +74,5 @@ jobs:
             sudo docker rm front || true
             sudo docker image prune -f
             sudo docker pull "${{ secrets.DOCKERHUB_USERNAME }}/front:latest"
-            sudo docker run -d --name front -p 80:80 "${{ secrets.DOCKERHUB_USERNAME }}/front:latest"
+            sudo docker run -d --network host --name front -p 80:80 "${{ secrets.DOCKERHUB_USERNAME }}/front:latest"
           EOF
