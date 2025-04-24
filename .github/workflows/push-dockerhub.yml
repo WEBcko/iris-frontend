@@ -1,84 +1,78 @@
-name: Test, Build and Push Docker image
+name: Test Build and Push Docker image
 
 on:
-  push:
-    branches: [ main ]
   workflow_dispatch:
+  push:
+    branches:
+      - main
 
 jobs:
   test:
     runs-on: ubuntu-22.04
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Use Node 18
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
-          cache: npm
+          node-version: '18'
+          cache: 'npm'
 
-      - name: Cache 📦 node_modules
+      - name: Cache Node.js modules
         uses: actions/cache@v4
         with:
           path: ~/.npm
-          key: ${{ runner.os }}-npm-${{ hashFiles('package-lock.json') }}
+          key: node-cache-${{ runner.os }}-npm-${{ hashFiles('package-lock.json') }}
           restore-keys: |
-            ${{ runner.os }}-npm-
+            node-cache-${{ runner.os }}-npm-
 
-      - name: Install deps
+      - name: Install dependencies
         run: npm ci
 
-      - name: Run tests
+      - name: Run user tests
         run: npm test
-        
+
   build:
-    needs: test
+    needs: test  
     runs-on: ubuntu-latest
-
+  
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
+      - name: Checkout repository
+        uses: actions/checkout@v4
+  
       - name: Log in to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Build & push image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/front:latest
-          build-args: |
-            VITE_API_URL=${{ secrets.API_URL }}
-            VITE_ENCRYPTION_KEY=${{ secrets.API_KEY }}
-          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/front:cache
-          cache-to:   type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/front:cache,mode=max
+        run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+  
+      - name: Build Docker image
+        run: |
+          docker build . \
+            --build-arg VITE_API_URL=${{ secrets.API_URL }} \
+            --build-arg VITE_ENCRYPTION_KEY=${{ secrets.API_KEY }} \
+            -t "${{ secrets.DOCKERHUB_USERNAME }}/front:latest"
+  
+      - name: Push Docker image 
+        run: docker push "${{ secrets.DOCKERHUB_USERNAME }}/front:latest"
 
   deploy:
-    needs: build
+    needs: build  
     runs-on: ubuntu-latest
-
+  
     steps:
-      - name: Add SSH key
+      - name: Setup SSH key
         run: |
-          install -m 700 -d ~/.ssh
+          mkdir -p ~/.ssh
           echo "${{ secrets.GCLOUD_SSH_KEY }}" > ~/.ssh/gcloud_key
           chmod 600 ~/.ssh/gcloud_key
-
-      - name: Pull & run container na VM
+  
+      - name: SSH into VM and deploy container
         run: |
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/gcloud_key $USER@$HOST << EOF
-            echo "\$DOCKERHUB_TOKEN" | sudo docker login -u "\$DOCKERHUB_USERNAME" --password-stdin
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/gcloud_key ${{ secrets.GCLOUD_USER }}@${{ secrets.GCLOUD_HOST }} << EOF
+            echo "${{ secrets.DOCKERHUB_TOKEN }}" | sudo docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
             sudo docker stop front || true
-            sudo docker rm   front || true
+            sudo docker rm front || true
             sudo docker image prune -f
-            sudo docker pull "${{ secrets.DOCKERHUB_USERNAME }}"/front:latest
-            # Nginx escuta na porta 80 interna → mapeie p/ 80 externa (ou 8080 se preferir)
-            sudo docker run -d --name front -p 80:80 "${{ secrets.DOCKERHUB_USERNAME }}"/front:latest
+            sudo docker pull "${{ secrets.DOCKERHUB_USERNAME }}/front:latest"
+            sudo docker run -d --name front -p 80:80 "${{ secrets.DOCKERHUB_USERNAME }}/front:latest"
           EOF
