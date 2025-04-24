@@ -72,19 +72,13 @@ jobs:
           chmod 600 ~/.ssh/gcloud_key
 
       - name: Pull & run container na VM
-        env:
-          HOST: ${{ secrets.GCLOUD_HOST }}
-          USER: ${{ secrets.GCLOUD_USER }}
-          IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/front:latest
-          DH_USER: ${{ secrets.DOCKERHUB_USERNAME }}
-          DH_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
         run: |
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/gcloud_key $USER@$HOST << EOF
             echo "\$DOCKERHUB_TOKEN" | sudo docker login -u "\$DOCKERHUB_USERNAME" --password-stdin
             sudo docker stop front || true
             sudo docker rm   front || true
             sudo docker image prune -f
-            sudo docker pull "\$IMAGE"
+            sudo docker pull "${{ secrets.DOCKERHUB_USERNAME }}"/front:latest
             # Nginx escuta na porta 80 interna → mapeie p/ 80 externa (ou 8080 se preferir)
-            sudo docker run -d --name front -p 80:80 "\$IMAGE"
+            sudo docker run -d --name front -p 80:80 "${{ secrets.DOCKERHUB_USERNAME }}"/front:latest
           EOF
