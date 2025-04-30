@@ -8,9 +8,7 @@ RUN npm ci          # dependências de produção apenas
 
 # Copie o resto do código e faça o build
 COPY . .
-COPY docker.env .env
 RUN npm run build              # produz a pasta dist/
-
 
 FROM nginx:1.25-alpine AS runtime
 
