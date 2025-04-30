@@ -8,11 +8,7 @@ RUN npm ci          # dependências de produção apenas
 
 # Copie o resto do código e faça o build
 COPY . .
-ARG VITE_API_URL
-ARG VITE_ENCRYPTION_KEY
-ENV VITE_API_URL=$VITE_API_URL \
-    VITE_ENCRYPTION_KEY=$VITE_ENCRYPTION_KEY \
-    NODE_ENV=production
+COPY docker.env .env
 RUN npm run build              # produz a pasta dist/
 
 
