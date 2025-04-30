@@ -1,4 +1,4 @@
-FROM node:18-alpine AS builder
+FROM node:20-alpine3.20-slim AS builder
 
 WORKDIR /app
 
@@ -10,7 +10,7 @@ RUN npm ci          # dependências de produção apenas
 COPY . .
 RUN npm run build              # produz a pasta dist/
 
-FROM nginx:1.25-alpine AS runtime
+FROM nginx:stable-alpine AS runtime
 
 COPY --from=builder /app/dist /usr/share/nginx/html
 
