@@ -52,9 +52,7 @@ jobs:
   
       - name: Build Docker image
         run: |
-          docker build . \
-            --env-file .env \
-            -t "${{ secrets.DOCKERHUB_USERNAME }}/front:latest"
+          docker build . -t "${{ secrets.DOCKERHUB_USERNAME }}/front:latest"
   
       - name: Push Docker image 
         run: docker push "${{ secrets.DOCKERHUB_USERNAME }}/front:latest"
