@@ -42,14 +42,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
   
+      - name: Create .env file
+        run: |
+          echo "VITE_API_URL=${{ secrets.API_URL }}" >> .env
+          echo "VITE_ENCRYPTION_KEY=${{ secrets.API_KEY }}" >> .env
+  
       - name: Log in to Docker Hub
         run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
   
       - name: Build Docker image
         run: |
           docker build . \
-            --build-arg VITE_API_URL=${{ secrets.API_URL }} \
-            --build-arg VITE_ENCRYPTION_KEY=${{ secrets.API_KEY }} \
+            --env-file .env \
             -t "${{ secrets.DOCKERHUB_USERNAME }}/front:latest"
   
       - name: Push Docker image 
