@@ -69,7 +69,7 @@ jobs:
             kubectl config use-context gke_${{ secrets.GCLOUD_PROJECT }}_us-central1_production
             kubectl set image deployment/front front=us-central1-docker.pkg.dev/${{secrets.GCLOUD_PROJECT}}/front/front:${GITHUB_SHA}
           elif [[ "${GITHUB_REF}" == "refs/heads/develop" ]]; then
-            gcloud container clusters get-credentials stage --zone us-central1-a --project ${{ secrets.GCLOUD_PROJECT }}  
+            gcloud container clusters get-credentials stage --zone us-central1 --project ${{ secrets.GCLOUD_PROJECT }}  
             
               kubectl config use-context gke_${{ secrets.GCLOUD_PROJECT }}_us-central1_stage
             kubectl set image deployment/front front=us-central1-docker.pkg.dev/${{secrets.GCLOUD_PROJECT}}/front/front:${GITHUB_SHA}
