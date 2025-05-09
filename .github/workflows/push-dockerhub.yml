@@ -1,80 +1,76 @@
-name: Test Build and Push Docker image
+name: CI/CD Pipeline
 
 on:
-  workflow_dispatch:
   push:
     branches:
       - main
+      - develop
+      - 'release/*'
 
 jobs:
   test:
-    runs-on: ubuntu-22.04
+      runs-on: ubuntu-22.04
+  
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v4
+  
+        - name: Set up Node.js
+          uses: actions/setup-node@v4
+          with:
+            node-version: '18'
+            cache: 'npm'
+  
+        - name: Cache Node.js modules
+          uses: actions/cache@v4
+          with:
+            path: ~/.npm
+            key: node-cache-${{ runner.os }}-npm-${{ hashFiles('package-lock.json') }}
+            restore-keys: |
+              node-cache-${{ runner.os }}-npm-
+  
+        - name: Install dependencies
+          run: npm ci
+  
+        - name: Run user tests
+          run: npm test
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-
-      - name: Cache Node.js modules
-        uses: actions/cache@v4
-        with:
-          path: ~/.npm
-          key: node-cache-${{ runner.os }}-npm-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            node-cache-${{ runner.os }}-npm-
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run user tests
-        run: npm test
-
-  build:
-    needs: test  
+  build_and_deploy:
+    needs: test
     runs-on: ubuntu-latest
-  
+    environment: ${{ github.ref }}
+    
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-  
-      - name: Create .env file
-        run: |
-          echo "VITE_API_URL=${{ secrets.API_URL }}" >> .env
-          echo "VITE_ENCRYPTION_KEY=${{ secrets.API_KEY }}" >> .env
-  
-      - name: Log in to Docker Hub
-        run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
-  
-      - name: Build Docker image
-        run: |
-          docker build . -t "${{ secrets.DOCKERHUB_USERNAME }}/front:latest"
-  
-      - name: Push Docker image 
-        run: docker push "${{ secrets.DOCKERHUB_USERNAME }}/front:latest"
+      - name: Checkout Code
+        uses: actions/checkout@v2
 
-  deploy:
-    needs: build  
-    runs-on: ubuntu-latest
-  
-    steps:
-      - name: Setup SSH key
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Login to Google Cloud
+        uses: google-github-actions/auth@v0
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+
+      - name: Set up Docker for Artifact Registry
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.GCLOUD_SSH_KEY }}" > ~/.ssh/gcloud_key
-          chmod 600 ~/.ssh/gcloud_key
-  
-      - name: SSH into VM and deploy container
+          gcloud auth configure-docker us-central1-docker.pkg.dev
+
+      - name: Build Docker Image
         run: |
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/gcloud_key ${{ secrets.GCLOUD_USER }}@${{ secrets.GCLOUD_HOST }} << EOF
-            echo "${{ secrets.DOCKERHUB_TOKEN }}" | sudo docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
-            sudo docker stop front || true
-            sudo docker rm front || true
-            sudo docker image prune -f
-            sudo docker pull "${{ secrets.DOCKERHUB_USERNAME }}/front:latest"
-            sudo docker run -d --network host --name front -p 80:80 "${{ secrets.DOCKERHUB_USERNAME }}/front:latest"
-          EOF
+          docker build -t us-central1-docker.pkg.dev/${{secrets.GCLOUD_PROJECT}}/front/front:${GITHUB_SHA} .
+          docker push us-central1-docker.pkg.dev/${{secrets.GCLOUD_PROJECT}}/front/front:${GITHUB_SHA}
+
+      - name: Deploy to Kubernetes
+        run: |
+          if [[ "${GITHUB_REF}" == "refs/heads/main" ]]; then
+            gcloud container clusters get-credentials production --zone us-central1-a --project ${{ secrets.GCLOUD_PROJECT }}
+          
+            kubectl config use-context gke_${{ secrets.GCLOUD_PROJECT }}_us-central1-a_my-cluster
+            kubectl set image deployment/front front=us-central1-docker.pkg.dev/${{ secrets.GCLOUD_PROJECT }}/front/front:${GITHUB_SHA}
+          elif [[ "${GITHUB_REF}" == "refs/heads/develop" ]]; then
+            gcloud container clusters get-credentials stage --zone us-central1-a --project ${{ secrets.GCP_PROJECT_ID }}  
+            
+            kubectl config use-context gke_${{ secrets.GCP_PROJECT_ID }}_us-central1-a_my-cluster
+            kubectl set image deployment/front front=us-central1-docker.pkg.dev/${{ secrets.GCLOUD_PROJECT }}/front/front:${GITHUB_SHA}
+          fi
