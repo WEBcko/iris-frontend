@@ -64,13 +64,13 @@ jobs:
       - name: Deploy to Kubernetes
         run: |
           if [[ "${GITHUB_REF}" == "refs/heads/main" ]]; then
-            gcloud container clusters get-credentials production --zone us-central1-a --project ${{ secrets.GCLOUD_PROJECT }}
+            gcloud container clusters get-credentials production --zone us-central1-a --project ${{secrets.GCLOUD_PROJECT}}
           
             kubectl config use-context gke_${{ secrets.GCLOUD_PROJECT }}_us-central1-a_my-cluster
-            kubectl set image deployment/front front=us-central1-docker.pkg.dev/${{ secrets.GCLOUD_PROJECT }}/front/front:${GITHUB_SHA}
+            kubectl set image deployment/front front=us-central1-docker.pkg.dev/${{secrets.GCLOUD_PROJECT}}/front/front:${GITHUB_SHA}
           elif [[ "${GITHUB_REF}" == "refs/heads/develop" ]]; then
             gcloud container clusters get-credentials stage --zone us-central1-a --project ${{ secrets.GCP_PROJECT_ID }}  
             
             kubectl config use-context gke_${{ secrets.GCP_PROJECT_ID }}_us-central1-a_my-cluster
-            kubectl set image deployment/front front=us-central1-docker.pkg.dev/${{ secrets.GCLOUD_PROJECT }}/front/front:${GITHUB_SHA}
+            kubectl set image deployment/front front=us-central1-docker.pkg.dev/${{secrets.GCLOUD_PROJECT}}/front/front:${GITHUB_SHA}
           fi
