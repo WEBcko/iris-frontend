@@ -51,12 +51,13 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ secrets.GCLOUD_PROJECT }}
-          install_components: 'gke-gcloud-auth-plugin'
           credentials_json: '${{ secrets.GKE_SECRET }}'
+          install_components: 'gke-gcloud-auth-plugin'
 
-      - name: Set up Docker for Artifact Registry
+      - name: Authenticate Docker with Artifact Registry
         run: |
           gcloud auth configure-docker us-central1-docker.pkg.dev
+
 
       - name: Build Docker Image
         run: |
