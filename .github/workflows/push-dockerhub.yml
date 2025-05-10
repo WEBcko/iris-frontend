@@ -52,7 +52,7 @@ jobs:
         with:
           project_id: ${{ secrets.GCLOUD_PROJECT }}
           install_components: 'gke-gcloud-auth-plugin'
-          export_default_credentials: true
+          credentials_json: '${{ secrets.GKE_SECRET }}'
 
       - name: Set up Docker for Artifact Registry
         run: |
