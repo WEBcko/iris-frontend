@@ -54,16 +54,11 @@ jobs:
           credentials_json: '${{ secrets.GKE_SECRET }}'
           install_components: 'gke-gcloud-auth-plugin'
 
-      - name: Authenticate Docker with Artifact Registry
+      - name: Install gke-gcloud-auth-plugin
         run: |
-          gcloud auth configure-docker us-central1-docker.pkg.dev
+          sudo apt-get update
+          sudo apt-get install -y google-cloud-sdk-gke-gcloud-auth-plugin
 
-      - name: Build Docker Image
-        run: |
-          gcloud artifacts repositories list --location=us-central1
-          docker build -t us-central1-docker.pkg.dev/${{secrets.GCLOUD_PROJECT}}/front/front:${GITHUB_SHA} .
-          docker push us-central1-docker.pkg.dev/${{secrets.GCLOUD_PROJECT}}/front/front:${GITHUB_SHA}
-        
       - name: Deploy to Kubernetes
         run: |
           if [[ "${GITHUB_REF}" == "refs/heads/main" ]]; then
@@ -72,8 +67,9 @@ jobs:
             kubectl config use-context gke_${{ secrets.GCLOUD_PROJECT }}_us-central1_production
             kubectl set image deployment/front front=us-central1-docker.pkg.dev/${{secrets.GCLOUD_PROJECT}}/front/front:${GITHUB_SHA}
           elif [[ "${GITHUB_REF}" == "refs/heads/develop" ]]; then
-            gcloud container clusters get-credentials stage --zone us-central1 --project ${{ secrets.GCLOUD_PROJECT }}  
+            gcloud container clusters get-credentials stage --zone us-central1 --project ${{ secrets.GCLOUD_PROJECT }}
             
-              kubectl config use-context gke_${{ secrets.GCLOUD_PROJECT }}_us-central1_stage
+            kubectl config use-context gke_${{ secrets.GCLOUD_PROJECT }}_us-central1_stage
             kubectl set image deployment/front front=us-central1-docker.pkg.dev/${{secrets.GCLOUD_PROJECT}}/front/front:${GITHUB_SHA}
           fi
+
