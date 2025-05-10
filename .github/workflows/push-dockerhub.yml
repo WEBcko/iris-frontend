@@ -83,5 +83,21 @@ jobs:
             
             kubectl config use-context gke_${{ secrets.GCLOUD_PROJECT }}_us-central1_stage
             kubectl set image deployment/front front=us-central1-docker.pkg.dev/${{secrets.GCLOUD_PROJECT}}/front/front:${GITHUB_SHA}
+
+          elif [[ "${GITHUB_REF}" == "refs/heads/release" ]]; then
+
+            - name: Send Email
+              uses: dawidd6/action-send-mail@v3
+              with:
+                server_address: smtp.gmail.com
+                server_port: 587
+                username: ${{ secrets.EMAIL_USERNAME }}
+                password: ${{ secrets.EMAIL_PASSWORD }}
+                subject: Pipeline Status
+                to: erno9845@gmail.com
+                from: GitHub Actions
+                body: |
+                  A pipeline terminou com sucesso!
+                      
           fi
 
