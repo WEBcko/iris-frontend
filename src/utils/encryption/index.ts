@@ -1,6 +1,6 @@
 import CryptoJS from "crypto-js";
 
-const encryptionKey = import.meta.env.VITE_ENCRYPTION_KEY;
+const encryptionKey = 'ti1lg4tHb/LhnkFeMfZxg2vdrcKGuTZeG6WnClnXLk0=';
 console.log(encryptionKey)
 
 export const decryptToken = (encryptedToken: string): string | null => {
