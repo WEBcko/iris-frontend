@@ -76,14 +76,14 @@ jobs:
         run: |
           gcloud container clusters get-credentials production --zone us-central1 --project ${{ secrets.GCLOUD_PROJECT }}
           kubectl config use-context gke_${{ secrets.GCLOUD_PROJECT }}_us-central1_production
-          kubectl set image deployment/back back=us-central1-docker.pkg.dev/${{ secrets.GCLOUD_PROJECT }}/front/front:${{ github.sha }}
+          kubectl set image deployment/front front=us-central1-docker.pkg.dev/${{ secrets.GCLOUD_PROJECT }}/front/front:${{ github.sha }}
       
       - name: Deploy to Staging
         if: github.ref == 'refs/heads/develop'
         run: |
           gcloud container clusters get-credentials stage --zone us-central1 --project ${{ secrets.GCLOUD_PROJECT }}
           kubectl config use-context gke_${{ secrets.GCLOUD_PROJECT }}_us-central1_stage
-          kubectl set image deployment/back back=us-central1-docker.pkg.dev/${{ secrets.GCLOUD_PROJECT }}/front/front:${{ github.sha }}
+          kubectl set image deployment/front front=us-central1-docker.pkg.dev/${{ secrets.GCLOUD_PROJECT }}/front/front:${{ github.sha }}
       
       - name: Release Branch
         if: startsWith(github.ref, 'refs/heads/release-')
